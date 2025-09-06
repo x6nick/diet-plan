@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Modern, responsive homepage template with clean CSS and accessible components." />
+  <title>My Awesome Site</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ===== CSS RESET (friendly) ===== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { 
+      margin: 0; 
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; 
+      line-height: 1.6;
+      background: #0b1020; /* Plain color background */
+      color: var(--text);
+    }
+    img, svg { display: block; max-width: 100%; height: auto; }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+
+    /* ===== THEME ===== */
+    :root {
+      --bg: #0b1020;
+      --panel: #0f162e;
+      --muted: #9aa0b4;
+      --text: #e6e9f2;
+      --brand: #7c5cff; /* primary */
+      --brand-2: #21d4fd; /* accent */
+      --ring: rgba(124, 92, 255, .45);
+      --success: #19c37d;
+      --warning: #ffb020;
+      --danger: #ff5a5f;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --container: 1120px;
+    }
+
+    .container { width: min(100% - 32px, var(--container)); margin-inline: auto; }
+
+    /* ===== HEADER ===== */
+    .header { position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(180%) blur(12px); border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(11,16,32,.6); }
+    .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; }
+    .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .3px; }
+    .logo-badge { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: grid; place-items: center; box-shadow: var(--shadow); }
+    .logo-badge span { font-size: 18px; color: white; font-weight: 800; }
+
+    .nav-links { display: flex; gap: 22px; align-items: center; }
+    .nav-links a { color: var(--muted); font-weight: 500; padding: 8px 10px; border-radius: 10px; transition: .2s ease; }
+    .nav-links a:hover { color: var(--text); background: rgba(255,255,255,.06); }
+
+    .cta { display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 12px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #081226; font-weight: 700; border: none; box-shadow: var(--shadow); cursor: pointer; }
+    .cta:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+
+    /* Mobile nav */
+    .hamburger { display: none; width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(255,255,255,.12); background: transparent; color: var(--text); }
+    .mobile-menu { display: none; }
+
+    /* ===== HERO ===== */
+    .hero { padding: clamp(48px, 6vw, 96px) 0 48px; position: relative; }
+    .hero-inner { display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(24px, 5vw, 48px); align-items: center; }
+
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; background: rgba(124,92,255,.14); color: #dcd6ff; font-weight: 600; letter-spacing: .2px; }
+    .eyebrow svg { width: 16px; height: 16px; }
+
+    .hero h1 { font-size: clamp(32px, 5vw, 56px); line-height: 1.08; margin: 14px 0 14px; }
+    .hero p { color: var(--muted); font-size: clamp(16px, 2vw, 18px); margin: 0 0 22px; }
+
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); color: var(--text); }
+    .btn:hover { background: rgba(255,255,255,.08); }
+
+    .statbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 24px; }
+    .stat { background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius); padding: 16px; text-align: center; }
+    .stat h3 { margin: 0; font-size: 24px; }
+    .stat p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+
+    .hero-art { position: relative; }
+    .glass { position: relative; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 16px; min-height: 100px; display: grid; align-content: start; gap: 8px; }
+    .tag { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; color: #091022; background: linear-gradient(135deg, var(--brand), var(--brand-2)); font-weight: 800; }
+
+    /* ===== FEATURES ===== */
+    .section { padding: 64px 0; }
+    .section h2 { font-size: clamp(26px, 4vw, 38px); margin: 0 0 8px; }
+    .section p.lead { color: var(--muted); margin: 0 0 26px; }
+
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .feat { background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)); border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: 18px; }
+    .feat h3 { margin: 12px 0 6px; font-size: 18px; }
+    .feat p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: rgba(124,92,255,.15); border: 1px solid rgba(124,92,255,.35); }
+
+    /* ===== TESTIMONIALS ===== */
+    .testimonials {
+      display: grid; 
+      grid-template-columns: repeat(3, 1fr); 
+      gap: 18px; 
+      align-items: start; /* Align testimonial cards to the top/start of grid cells */
+    }
+    .quote { background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)); border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: 18px; }
+    .quote p { margin: 0 0 12px; }
+    .quote footer { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 14px; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), var(--brand-2)); }
+
+  
+
+    /* ===== FOOTER ===== */
+    footer { padding: 36px 0; color: var(--muted); border-top: 1px solid rgba(255,255,255,.06); margin-top: 48px; }
+    .footgrid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 18px; }
+    .footgrid h4 { margin: 0 0 8px; color: var(--text); }
+    .footgrid ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 960px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .features { grid-template-columns: repeat(2, 1fr); }
+      .testimonials { grid-template-columns: repeat(2, 1fr); }
+      .footgrid { grid-template-columns: 1fr 1fr; }
+      .hamburger { display: inline-grid; place-items: center; }
+      .nav-links { display: none; }
+      .mobile-menu { display: grid; gap: 8px; padding: 12px; }
+      .mobile-menu a { padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.06); color: var(--text); }
+      .mobile-menu.open { display: grid; }
+    }
+
+    @media (max-width: 640px) {
+      .features { grid-template-columns: 1fr; }
+      .testimonials { grid-template-columns: 1fr; }
+      .statbar { grid-template-columns: 1fr; }
+      .footgrid { grid-template-columns: 1fr; }
+      .cta, .btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="container nav" aria-label="Primary">
+      <a href="#" class="logo" aria-label="Homepage">
+        <span class="logo-badge" aria-hidden="true"><span>∑</span></span>
+        <span>Smart Diet and Meal Planner</span>
+      </a>
+
+      <nav class="nav-links" aria-label="Main Navigation">
+        <a href="meal.html">Meal planning</a>
+        <a href="recipe.html">Recipe Suggestions</a>
+        <a href="calory.html">Calorie tracking</a>
+        <a href="cal.html">Calculation</a>
+        <a href="contact.html" class="cta">Contact</a>
+      </nav>
+
+      <button class="hamburger" id="hamburger" aria-label="Open menu" aria-controls="mnav" aria-expanded="false">☰</button>
+    </div>
+    <div id="mnav" class="mobile-menu container" hidden>
+      <a href="login.html">Features</a>
+      <a href="#about">About</a>
+      <a href="#testimonials">Stories</a>
+      <a href="#contact">Contact</a>
+      <button class="cta">Get Started</button>
+    </div>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div>
+        <span class="eyebrow">
+          <!-- sparkle icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.09 4.73L19 9l-4.73 2.09L12 16l-2.09-4.91L5 9l4.91-2.27L12 2zM4 14l1.26 2.84L8 18l-2.74 1.16L4 22l-1.26-2.84L0 18l2.74-1.16L4 14zm16 0l1.26 2.84L24 18l-2.74 1.16L20 22l-1.26-2.84L16 18l2.74-1.16L20 14z"/></svg>
+          Smart diet plan
+        </span>
+        <h1>Plan smarter, eat better, live longer.</h1>
+        <p>“A healthier you begins with smarter choices.
+          Get personalized meal plans for your unique goals.
+          Eat well, stay fit, and live your best life.”</p>
+        <div class="actions">
+          <a href="meal.html" class="cta">Start Healthy Plan</a>
+          <a href="nut.html" class="cta">Nutrition Guide →</a>
+        </div>
+        <div class="statbar" aria-label="Highlights">
+          <div class="stat"><h3>500+</h3><p>Healthy Recipes</p></div>
+          <div class="stat"><h3>98%</h3><p>Nutrition Accuracy</p></div>
+          <div class="stat"><h3>7 Days</h3><p>Smart Meal Plan</p></div>
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <div class="glass">
+          <div class="grid">
+            <div class="card">
+              <span class="tag">🥗 Quick & Easy</span>
+              <p>Get meal plans instantly, designed to fit your lifestyle.</p>
+            </div>
+            <div class="card">
+              <span class="tag">🌍 Health-Friendly</span>
+              <p>Balanced nutrition with simple, accessible ingredients.</p>
+            </div>
+            <div class="card">
+              <span class="tag">🎨 Personalized</span>
+              <p>Customize plans based on your goals: weight loss, fitness, or diabetes.</p>
+            </div>
+            <div class="card">
+              <span class="tag">⚡ Start Today</span>
+              <p>Simple steps → choose a plan → follow recipes → track progress.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section id="features" class="section">
+    <div class="container">
+      <h2>Everything you need</h2>
+      <p class="lead"></p>
+
+      <div class="features" role="list">
+        <article class="feat" role="listitem">
+          <div class="icon" aria-hidden="true">🍎 </div>
+          <h3>🍎 Healthy & Balanced</h3>
+          <p>Personalized meal plans designed for your health goals.</p>
+        </article>
+        <article class="feat" role="listitem">
+          <div class="icon" aria-hidden="true">🛡️ </div>
+          <h3>🛡️ Nutrition-Safe</h3>
+          <p>Scientifically backed recipes with best dietary practices.
+          </p>
+        </article>
+        <article class="feat" role="listitem">
+          <div class="icon" aria-hidden="true">🎯</div>
+          <h3>🎯 Goal-Focused</h3>
+          <p>Supports weight loss, fitness, or diabetes management effectively.</p>
+        </article>
+      </div>
+
+      <div id="about" class="cta-strip">
+        <h3>Ready to start your Smart Diet journey?</h3>
+        <a href="meal.html" class="btn" aria-label="Learn more about plans">Explore Plans</a>
+      </div>
+  <!-- ===== TESTIMONIALS ===== -->
+  <section id="testimonials" class="section">
+    <div class="container">
+      <h2>Loved by users</h2>
+      <p class="lead">Real stories from people who improved their health with Smart Diet & Meal Planner.</p>
+      <div class="testimonials">
+        <figure class="quote">
+          <blockquote>
+            <p>“The meal plans are so easy to follow. I lost 3 kg in just two weeks while still enjoying my food!”</p>
+          </blockquote>
+          <footer>
+            <span class="avatar" aria-hidden="true"></span>
+            <div>
+              <strong>Ramya</strong><br/>Founder, Leo Studio
+            </div>
+          </footer>
+        </figure>
+        <figure class="quote">
+          <blockquote>
+            <p>“I finally found a plan that fits my diabetes diet. Simple, healthy, and effective.”</p>
+          </blockquote>
+          <footer>
+            <span class="avatar" aria-hidden="true"></span>
+            <div>
+              <strong>Prabhas</strong><br/>Business Owner
+            </div>
+          </footer>
+        </figure>
+        <figure class="quote">
+          <blockquote>
+            <p>“The recipes are tasty and quick to prepare. Tracking my progress keeps me motivated every day.”</p>
+          </blockquote>
+          <footer>
+            <span class="avatar" aria-hidden="true"></span>
+            <div>
+              <strong>Ram</strong><br/>Fitness Enthusiast
+            </div>
+          </footer>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer id="contact">
+    <div class="container footgrid">
+      <div>
+        <h4>Smart Diet and Meal Planner</h4>
+        <p>Simplifying healthy living with meal plans, recipes, and wellness tracking & Eat smarter, live better – with customized recipes and nutrition planning.</p>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="#">Docs</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Status</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container" style="margin-top: 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <small>© <span id="year"></span> © 2025 Smart Diet and Meal Planner. All rights reserved.</small>
+      <small><a href="#">Privacy</a> · <a href="#">Terms</a></small>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle with accessibility
+    const hamburger = document.getElementById('hamburger');
+    const mnav = document.getElementById('mnav');
+    function toggleMenu() {
+      const open = mnav.classList.toggle('open');
+      if (open) { mnav.removeAttribute('hidden'); } else { mnav.setAttribute('hidden', ''); }
+      hamburger.setAttribute('aria-expanded', String(open));
+    }
+    hamburger.addEventListener('click', toggleMenu);
+    hamburger.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMenu(); }});
+
+    // Dynamic year in footer
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

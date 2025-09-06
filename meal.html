@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Smart Diet & Meal Planner</title>
+  <meta name="description" content="Interactive Smart Diet & Meal Planner with 7-day sample plan, filters and grocery list generator">
+  <style>
+    :root{
+      --bg:#0f0f10;
+      --card:#1b1b1c;
+      --muted:#a8a8a8;
+      --accent:#e50914; /* Netflix-like red */
+      --glass: rgba(255,255,255,0.03);
+      --radius:14px;
+      --maxw:1100px;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#070707);color:#fff}
+    .wrap{max-width:var(--maxw);margin:28px auto;padding:20px}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+    .logo{display:flex;align-items:center;gap:12px}
+    .logo .mark{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#ff6b6b);display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .controls{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}
+    .btn{background:var(--accent);border:none;padding:10px 14px;border-radius:10px;color:white;cursor:pointer;font-weight:600}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .chip{background:var(--glass);padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+
+    .layout{display:grid;grid-template-columns:320px 1fr;gap:18px}
+    aside{background:linear-gradient(180deg,var(--card),#0f0f0f);padding:16px;border-radius:12px}
+    .aside-section{margin-bottom:14px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+    select,input[type="range"]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:white}
+
+    main{min-height:60vh}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+    .card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .card h3{margin:0 0 6px 0;font-size:15px}
+    .meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+    .ingredients{font-size:12px;color:var(--muted);line-height:1.4}
+
+    footer{margin-top:20px;color:var(--muted);font-size:13px}
+
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal{background:#0a0a0a;padding:18px;border-radius:12px;max-width:720px;width:100%;border:1px solid rgba(255,255,255,0.04)}
+    .modal h2{margin:0 0 8px}
+    .grocery-list{max-height:320px;overflow:auto;padding-right:8px}
+    .grocery-list li{margin:6px 0}
+
+    /* responsive */
+    @media (max-width:900px){
+      .layout{grid-template-columns:1fr;}
+      .logo .mark{width:46px;height:46px}
+    }
+
+    .tag{display:inline-block;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);font-size:12px;margin-right:6px}
+    .toggle{display:inline-flex;align-items:center;gap:8px}
+    .small{font-size:12px;color:var(--muted)}
+
+    /* subtle hover */
+    .card:hover{transform:translateY(-4px);transition:transform .18s}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <div class="mark">SD</div>
+        <div>
+          <h1>Smart Diet — Meal Planner</h1>
+          <p class="lead">7-day balanced meal plan with filters, calories, and grocery list generator</p>
+        </div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button class="btn" id="generateGrocery">Generate Grocery List</button>
+        <button class="btn ghost" id="exportPlan">Export (JSON)</button>
+      </div>
+    </header>
+
+    <div class="controls">
+      <div class="chip toggle">
+        <input type="checkbox" id="vegOnly" style="accent-color:var(--accent)"> <label for="vegOnly" style="margin:0 6px;cursor:pointer">Vegetarian only</label>
+      </div>
+      <div class="chip toggle">
+        <input type="checkbox" id="lowCal" style="accent-color:var(--accent)"> <label for="lowCal" style="margin:0 6px;cursor:pointer">Under 600 kcal per meal</label>
+      </div>
+      <div class="chip" id="shuffleBtn">Shuffle meals</div>
+      <div class="chip" id="resetBtn">Reset</div>
+    </div>
+
+    <div class="layout">
+      <aside>
+        <div class="aside-section">
+          <label>Choose day</label>
+          <select id="daySelect"></select>
+        </div>
+        <div class="aside-section">
+          <label>Meal types</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="tag">Breakfast</span>
+            <span class="tag">Lunch</span>
+            <span class="tag">Dinner</span>
+            <span class="tag">Snack</span>
+          </div>
+        </div>
+        <div class="aside-section">
+          <label>Notes</label>
+          <p class="small">Tip: Click any meal card to add it to the grocery list. Use filters to tailor to dietary needs.</p>
+        </div>
+      </aside>
+
+      <main>
+        <section>
+          <h2 style="margin-top:0">Meal Plan</h2>
+          <div class="grid" id="mealsGrid"></div>
+        </section>
+
+        <footer>
+          <p>Made with <span style="color:var(--accent)">❤</span> — Smart Diet Planner</p>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal: Grocery -->
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <h2>Grocery List</h2>
+      <p class="small">Items collected from selected meals:</p>
+      <ul class="grocery-list" id="groceryItems"></ul>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="btn ghost" id="closeModal">Close</button>
+        <button class="btn" id="copyGrocery">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Sample 7-day meal data (balanced, simple). Each meal has name, type, calories, ingredients, vegetarian flag
+    const samplePlan = {
+      "Monday":[
+        {name:"Oats with Berries & Almonds",type:"Breakfast",cal:420,veg:true,ingredients:["Rolled oats","Mixed berries","Almonds","Milk or plant milk","Honey"]},
+        {name:"Grilled Chicken Salad",type:"Lunch",cal:540,veg:false,ingredients:["Chicken breast","Mixed greens","Cherry tomatoes","Cucumber","Olive oil","Lemon"]},
+        {name:"Quinoa Veg Bowl",type:"Dinner",cal:510,veg:true,ingredients:["Quinoa","Roasted veggies","Chickpeas","Tahini"]},
+        {name:"Grilled Tofu Salad",type:"Lunch",cal:480,veg:true,ingredients:["Tofu","Mixed greens","Cherry tomatoes","Olive oil dressing"]},
+        {name:"Lentil Spinach Stew",type:"Dinner",cal:495,veg:true,ingredients:["Lentils","Spinach","Carrots","Herbs"]},
+        {name:"Greek Yogurt + Honey",type:"Snack",cal:160,veg:true,ingredients:["Greek yogurt","Honey","Walnuts"]},
+        
+      ],
+      "Tuesday":[
+        {name:"Smoothie (Spinach, Banana, Protein)",type:"Breakfast",cal:380,veg:true,ingredients:["Spinach","Banana","Protein powder","Almond milk"]},
+        {name:"Turkey Wrap",type:"Lunch",cal:600,veg:false,ingredients:["Whole wheat wrap","Turkey slices","Lettuce","Tomato","Avocado"]},
+        {name:"Salmon with Sweet Potato",type:"Dinner",cal:620,veg:false,ingredients:["Salmon fillet","Sweet potato","Asparagus","Olive oil"]},
+        {name:"Lentil Spinach Stew",type:"Dinner",cal:495,veg:true,ingredients:["Lentils","Spinach","Carrots","Herbs"]},
+        {name:"Grilled Tofu Salad",type:"Lunch",cal:480,veg:true,ingredients:["Tofu","Mixed greens","Cherry tomatoes","Olive oil dressing"]},
+        {name:"Carrot sticks + Hummus",type:"Snack",cal:150,veg:true,ingredients:["Carrots","Hummus"]}
+      ],
+      "Wednesday":[
+        {name:"Poached Eggs on Toast",type:"Breakfast",cal:360,veg:false,ingredients:["Eggs","Whole grain bread","Avocado","Pepper"]},
+        {name:"Lentil Soup",type:"Lunch",cal:480,veg:true,ingredients:["Red lentils","Carrot","Celery","Onion","Garlic"]},
+        {name:"Stir-fry Tofu & Veggies",type:"Dinner",cal:530,veg:true,ingredients:["Tofu","Broccoli","Bell pepper","Soy sauce","Brown rice"]},
+        {name:"Lentil Spinach Stew",type:"Dinner",cal:495,veg:true,ingredients:["Lentils","Spinach","Carrots","Herbs"]},
+        {name:"Grilled Tofu Salad",type:"Lunch",cal:480,veg:true,ingredients:["Tofu","Mixed greens","Cherry tomatoes","Olive oil dressing"]},
+        {name:"Mixed Nuts (small)",type:"Snack",cal:200,veg:true,ingredients:["Almonds","Cashews","Walnuts"]}
+      ],
+      "Thursday":[
+        {name:"Chia Pudding with Fruit",type:"Breakfast",cal:340,veg:true,ingredients:["Chia seeds","Coconut milk","Mango","Maple syrup"]},
+        {name:"Grilled Veg & Feta Bowl",type:"Lunch",cal:520,veg:true,ingredients:["Zucchini","Eggplant","Feta","Quinoa"]},
+        {name:"Chicken & Veg Skewers",type:"Dinner",cal:580,veg:false,ingredients:["Chicken","Bell pepper","Onion","Olive oil"]},
+        {name:"Lentil Spinach Stew",type:"Dinner",cal:495,veg:true,ingredients:["Lentils","Spinach","Carrots","Herbs"]},
+        {name:"Grilled Tofu Salad",type:"Lunch",cal:480,veg:true,ingredients:["Tofu","Mixed greens","Cherry tomatoes","Olive oil dressing"]},
+        {name:"Apple + Peanut Butter",type:"Snack",cal:190,veg:true,ingredients:["Apple","Peanut butter"]}
+      ],
+      "Friday":[
+        {name:"Breakfast Burrito (Veg)",type:"Breakfast",cal:450,veg:true,ingredients:["Tortilla","Eggs or tofu scramble","Beans","Salsa","Avocado"]},
+        {name:"Soba Noodle Salad",type:"Lunch",cal:500,veg:true,ingredients:["Soba noodles","Cucumber","Edamame","Sesame dressing"]},
+        {name:"Beef & Veggie Stir-fry",type:"Dinner",cal:650,veg:false,ingredients:["Beef strips","Broccoli","Carrot","Brown rice"]},
+        {name:"Lentil Spinach Stew",type:"Dinner",cal:495,veg:true,ingredients:["Lentils","Spinach","Carrots","Herbs"]},
+        {name:"Grilled Tofu Salad",type:"Lunch",cal:480,veg:true,ingredients:["Tofu","Mixed greens","Cherry tomatoes","Olive oil dressing"]},
+        {name:"Yogurt Parfait",type:"Snack",cal:170,veg:true,ingredients:["Yogurt","Granola","Berries"]}
+      ],
+      "Saturday":[
+        {name:"Pancakes (Oat)",type:"Breakfast",cal:520,veg:true,ingredients:["Oat flour","Eggs or flax egg","Banana","Maple syrup"]},
+        {name:"Grilled Fish Tacos",type:"Lunch",cal:600,veg:false,ingredients:["White fish","Tortillas","Cabbage slaw","Lime"]},
+        {name:"Veggie Pasta",type:"Dinner",cal:560,veg:true,ingredients:["Whole grain pasta","Tomato sauce","Mushrooms","Spinach"]},
+        {name:"Lentil Spinach Stew",type:"Dinner",cal:495,veg:true,ingredients:["Lentils","Spinach","Carrots","Herbs"]},
+        {name:"Grilled Tofu Salad",type:"Lunch",cal:480,veg:true,ingredients:["Tofu","Mixed greens","Cherry tomatoes","Olive oil dressing"]},
+        {name:"Dark Chocolate (small)",type:"Snack",cal:180,veg:true,ingredients:["Dark chocolate"]}
+      ],
+      "Sunday":[
+        {name:"Fruit Bowl + Granola",type:"Breakfast",cal:330,veg:true,ingredients:["Seasonal fruit","Granola","Yogurt"]},
+        {name:"Roast Chicken & Veg",type:"Lunch",cal:700,veg:false,ingredients:["Whole chicken pieces","Potatoes","Carrots","Rosemary"]},
+        {name:"Mushroom Risotto",type:"Dinner",cal:580,veg:true,ingredients:["Arborio rice","Mushrooms","Parmesan","Onion"]},
+        {name:"Lentil Spinach Stew",type:"Dinner",cal:495,veg:true,ingredients:["Lentils","Spinach","Carrots","Herbs"]},
+        {name:"Grilled Tofu Salad",type:"Lunch",cal:480,veg:true,ingredients:["Tofu","Mixed greens","Cherry tomatoes","Olive oil dressing"]},
+        {name:"Protein Bar",type:"Snack",cal:210,veg:true,ingredients:["Protein bar"]}
+      ]
+    };
+
+    // State
+    let plan = JSON.parse(JSON.stringify(samplePlan)); // deep copy
+    const days = Object.keys(plan);
+
+    // UI hooks
+    const daySelect = document.getElementById('daySelect');
+    const mealsGrid = document.getElementById('mealsGrid');
+    const vegOnly = document.getElementById('vegOnly');
+    const lowCal = document.getElementById('lowCal');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const modal = document.getElementById('modal');
+    const groceryItems = document.getElementById('groceryItems');
+    const generateGrocery = document.getElementById('generateGrocery');
+    const closeModal = document.getElementById('closeModal');
+    const copyGrocery = document.getElementById('copyGrocery');
+    const exportPlan = document.getElementById('exportPlan');
+
+    function populateDays(){
+      daySelect.innerHTML = '';
+      days.forEach(d=>{
+        const opt = document.createElement('option');opt.value=d;opt.textContent=d;daySelect.appendChild(opt);
+      });
+    }
+
+    function renderMeals(day){
+      const selected = plan[day] || [];
+      mealsGrid.innerHTML = '';
+      const filters = {veg:vegOnly.checked, lowCal:lowCal.checked};
+      selected.forEach((m,idx)=>{
+        if(filters.veg && !m.veg) return;
+        if(filters.lowCal && m.cal>600) return; // meal-level filter threshold
+        const card = document.createElement('div');card.className='card';
+        card.innerHTML = `<h3>${m.name}</h3>
+          <div class="meta">${m.type} • ${m.cal} kcal • ${m.veg? 'Vegetarian' : 'Non-veg'}</div>
+          <div class="ingredients">${m.ingredients.slice(0,4).map(i=>`• ${i}`).join('<br>')}</div>`;
+        card.addEventListener('click',()=>toggleSelectMeal(day,idx,card));
+        mealsGrid.appendChild(card);
+      });
+    }
+
+    // selected meals set for grocery gathering
+    const selectedMeals = new Set();
+    function toggleSelectMeal(day,idx,card){
+      const uid = `${day}::${idx}`;
+      if(selectedMeals.has(uid)){selectedMeals.delete(uid);card.style.borderColor='';card.style.boxShadow='';}
+      else{selectedMeals.add(uid);card.style.borderColor='rgba(229,9,20,0.4)';card.style.boxShadow='0 6px 18px rgba(233,9,20,0.06)';}
+    }
+
+    function gatherGrocery(){
+      const items = {};
+      selectedMeals.forEach(uid=>{
+        const [d,i] = uid.split('::');
+        const meal = plan[d][Number(i)];
+        meal.ingredients.forEach(it=>{const key=it.toLowerCase();items[key]=(items[key]||0)+1});
+      });
+      return Object.keys(items).sort();
+    }
+
+    generateGrocery.addEventListener('click',()=>{
+      const list = gatherGrocery();
+      groceryItems.innerHTML = '';
+      if(list.length===0){groceryItems.innerHTML='<li><em>No meals selected — click meals to add them.</em></li>'}
+      else{list.forEach(i=>{const li=document.createElement('li');li.textContent=i;groceryItems.appendChild(li)})}
+      modal.style.display='flex';
+    });
+
+    closeModal.addEventListener('click',()=>modal.style.display='none');
+    copyGrocery.addEventListener('click',()=>{
+      const text = Array.from(groceryItems.querySelectorAll('li')).map(li=>li.textContent).join('\n');
+      navigator.clipboard?.writeText(text).then(()=>{alert('Copied to clipboard')}).catch(()=>{alert('Copy failed')});
+    });
+
+    daySelect.addEventListener('change',e=>renderMeals(e.target.value));
+    vegOnly.addEventListener('change',()=>renderMeals(daySelect.value));
+    lowCal.addEventListener('change',()=>renderMeals(daySelect.value));
+
+    shuffleBtn.addEventListener('click',()=>{
+      // shuffle meals per day lightly
+      days.forEach(d=>{plan[d] = plan[d].sort(()=>Math.random()-0.5)});
+      renderMeals(daySelect.value);
+    });
+    resetBtn.addEventListener('click',()=>{plan = JSON.parse(JSON.stringify(samplePlan)); renderMeals(daySelect.value)});
+
+    exportPlan.addEventListener('click',()=>{
+      const data = JSON.stringify(plan,null,2);
+      const blob = new Blob([data],{type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');a.href=url;a.download='smart-diet-plan.json';a.click();URL.revokeObjectURL(url);
+    });
+
+    // init
+    populateDays();daySelect.value = days[0];renderMeals(days[0]);
+
+    // Accessibility: close modal on backdrop click
+    modal.addEventListener('click',e=>{if(e.target===modal)modal.style.display='none'})
+
+    // simple calorie suggestion: highlight high cal meals
+    (function highlightHighCal(){
+      const observer = new MutationObserver(()=>{
+        document.querySelectorAll('.card').forEach(c=>{
+          if(c.querySelector('.meta')?.textContent.match(/(\d+) kcal/)){
+            const kcal = Number(c.querySelector('.meta').textContent.match(/(\d+) kcal/)[1]);
+            if(kcal>600) c.style.opacity='0.9';
+          }
+        })
+      });
+      observer.observe(mealsGrid,{childList:true,subtree:true});
+    })();
+
+  </script>
+</body>
+</html>

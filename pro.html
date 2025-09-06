@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smart Weekly Calorie & Macro Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#111827; --card:#1f2937; --muted:#9ca3af;
+      --accent:#3b82f6; --success:#10b981; --radius:14px;
+      color-scheme: dark;
+    }
+    body{
+      margin:0;font-family:Inter,system-ui;
+      background:linear-gradient(180deg,var(--bg),#0b0f19 120%);
+      color:#f3f4f6;line-height:1.6;padding:28px;
+    }
+    .container{max-width:1150px;margin:0 auto}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+    h1{font-size:22px;margin:0}
+    .lead{color:var(--muted);font-size:14px;margin:4px 0 0 0}
+    nav{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+    nav button{padding:8px 14px;border-radius:10px;border:none;font-weight:600;background:#1f2937;color:#f3f4f6;cursor:pointer}
+    nav button.active{background:var(--accent);color:#fff}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:20px}
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 6px 20px rgba(0,0,0,0.5);margin-bottom:20px}
+    .card h2{margin-top:0}
+    input,button{padding:10px;border-radius:10px;border:none;font-size:14px}
+    input{background:#111827;color:#f3f4f6;border:1px solid rgba(255,255,255,0.08)}
+    button{background:var(--accent);color:#fff;font-weight:600;cursor:pointer;transition:opacity .2s}
+    button:hover{opacity:0.85}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.08)}
+    th{color:var(--muted);font-size:13px;font-weight:600}
+    td{font-size:14px}
+    .progress{height:20px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;margin-top:10px}
+    .progress-bar{height:100%;background:var(--success);width:0%;transition:width .3s}
+    footer{margin-top:20px;text-align:center;color:var(--muted);font-size:13px}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+    /* HUD Boxes */
+    .hud-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      justify-items: center;
+      margin-top: 20px;
+    }
+    .hud {
+      width: 280px;
+      padding: 18px;
+      border-radius: var(--radius);
+      color: #ffffff;
+      background: #000000;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .hud .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .hud .title { font-size: 20px; font-weight: 800; }
+    .hud .subtitle { font-size: 14px; color: #cfd6df; }
+    .chart-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Smart Weekly Calorie & Macro Tracker</h1>
+        <p class="lead">Track meals and macros for 7 days</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button id="exportBtn">Export</button>
+        <button id="printBtn">Print</button>
+      </div>
+    </header>
+
+    <nav id="dayNav"></nav>
+
+    <div class="grid">
+      <main>
+        <!-- Meal log -->
+        <div class="card">
+          <h2>Log a Meal - <span id="dayTitle">Day 1</span></h2>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <input type="text" id="mealName" placeholder="Meal name" />
+            <input type="number" id="mealCalories" placeholder="Calories" />
+            <input type="number" id="mealProtein" placeholder="Protein (g)" />
+            <input type="number" id="mealCarbs" placeholder="Carbs (g)" />
+            <input type="number" id="mealFat" placeholder="Fat (g)" />
+            <button id="addMeal">Add</button>
+          </div>
+          <table>
+            <thead><tr><th>Meal</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fats</th><th></th></tr></thead>
+            <tbody id="mealTable"></tbody>
+          </table>
+        </div>
+
+        <!-- 4 HUD Boxes -->
+        <div class="hud-grid">
+          <div class="hud">
+            <div class="row">
+              <div class="title">Protein</div>
+              <div class="subtitle">Last 7 days</div>
+            </div>
+            <div class="chart-container">
+              <svg id="proteinChart1" viewBox="0 0 360 140" width="100%" height="140"></svg>
+            </div>
+          </div>
+
+          <div class="hud">
+            <div class="row">
+              <div class="title">Calories</div>
+              <div class="subtitle">Last 7 days</div>
+            </div>
+            <div class="chart-container">
+              <svg id="proteinChart2" viewBox="0 0 360 140" width="100%" height="140"></svg>
+            </div>
+          </div>
+
+          <div class="hud">
+            <div class="row">
+              <div class="title">Carbohydrates</div>
+              <div class="subtitle">Last 7 days</div>
+            </div>
+            <div class="chart-container">
+              <svg id="carbChart" viewBox="0 0 360 140" width="100%" height="140"></svg>
+            </div>
+          </div>
+
+          <div class="hud">
+            <div class="row">
+              <div class="title">Fats</div>
+              <div class="subtitle">Last 7 days</div>
+            </div>
+            <div class="chart-container">
+              <svg id="fatChart" viewBox="0 0 360 140" width="100%" height="140"></svg>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside>
+        <div class="card">
+          <h2>Daily Goals</h2>
+          <input type="number" id="goalCalories" placeholder="Calories goal" style="width:90%;margin-bottom:6px" />
+          <input type="number" id="goalProtein" placeholder="Protein goal (g)" style="width:90%;margin-bottom:6px" />
+          <input type="number" id="goalCarbs" placeholder="Carbs goal (g)" style="width:90%;margin-bottom:6px" />
+          <input type="number" id="goalFat" placeholder="Fat goal (g)" style="width:90%;margin-bottom:10px" />
+
+          <div>
+            <strong>Calories</strong>
+            <div class="progress"><div class="progress-bar" id="calBar"></div></div>
+            <p id="calSummary">0 / 0 kcal</p>
+
+            <strong>Protein</strong>
+            <div class="progress"><div class="progress-bar" id="proBar" style="background:#f59e0b"></div></div>
+            <p id="proSummary">0 / 0 g</p>
+
+            <strong>Carbs</strong>
+            <div class="progress"><div class="progress-bar" id="carbBar" style="background:#3b82f6"></div></div>
+            <p id="carbSummary">0 / 0 g</p>
+
+            <strong>Fat</strong>
+            <div class="progress"><div class="progress-bar" id="fatBar" style="background:#ef4444"></div></div>
+            <p id="fatSummary">0 / 0 g</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>7-day calorie & macro tracking • Stay consistent • Reach your goals</footer>
+  </div>
+
+  <script>
+    const dayNav=document.getElementById('dayNav');
+    const dayTitle=document.getElementById('dayTitle');
+    const mealTable=document.getElementById('mealTable');
+
+    const mealName=document.getElementById('mealName');
+    const mealCalories=document.getElementById('mealCalories');
+    const mealProtein=document.getElementById('mealProtein');
+    const mealCarbs=document.getElementById('mealCarbs');
+    const mealFat=document.getElementById('mealFat');
+    const addMeal=document.getElementById('addMeal');
+
+    const goalCalories=document.getElementById('goalCalories');
+    const goalProtein=document.getElementById('goalProtein');
+    const goalCarbs=document.getElementById('goalCarbs');
+    const goalFat=document.getElementById('goalFat');
+
+    const calBar=document.getElementById('calBar');
+    const proBar=document.getElementById('proBar');
+    const carbBar=document.getElementById('carbBar');
+    const fatBar=document.getElementById('fatBar');
+
+    const calSummary=document.getElementById('calSummary');
+    const proSummary=document.getElementById('proSummary');
+    const carbSummary=document.getElementById('carbSummary');
+    const fatSummary=document.getElementById('fatSummary');
+
+    let weekMeals=Array.from({length:7},()=>({meals:[],goals:{cal:0,pro:0,carb:0,fat:0}}));
+    let currentDay=0;
+
+    function renderNav(){
+      dayNav.innerHTML='';
+      for(let i=0;i<7;i++){
+        const btn=document.createElement('button');
+        btn.textContent=`Day ${i+1}`;
+        if(i===currentDay) btn.classList.add('active');
+        btn.onclick=()=>{currentDay=i;render();};
+        dayNav.appendChild(btn);
+      }
+    }
+
+    function render(){
+      renderNav();
+      dayTitle.textContent=`Day ${currentDay+1}`;
+      mealTable.innerHTML='';
+      const day=weekMeals[currentDay];
+      let totalCal=0,totalPro=0,totalCarb=0,totalFat=0;
+      day.meals.forEach((m,i)=>{
+        totalCal+=m.calories; totalPro+=m.protein; totalCarb+=m.carbs; totalFat+=m.fat;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${m.name}</td><td>${m.calories}</td><td>${m.protein}</td><td>${m.carbs}</td><td>${m.fat}</td><td><button onclick="removeMeal(${i})">✕</button></td>`;
+        mealTable.appendChild(tr);
+      });
+
+      goalCalories.value=day.goals.cal||'';
+      goalProtein.value=day.goals.pro||'';
+      goalCarbs.value=day.goals.carb||'';
+      goalFat.value=day.goals.fat||'';
+
+      const gCal=day.goals.cal||0,gPro=day.goals.pro||0,gCarb=day.goals.carb||0,gFat=day.goals.fat||0;
+
+      calBar.style.width=gCal?Math.min(100,totalCal/gCal*100)+'%':0;
+      proBar.style.width=gPro?Math.min(100,totalPro/gPro*100)+'%':0;
+      carbBar.style.width=gCarb?Math.min(100,totalCarb/gCarb*100)+'%':0;
+      fatBar.style.width=gFat?Math.min(100,totalFat/gFat*100)+'%':0;
+
+      calSummary.textContent=`${totalCal} / ${gCal} kcal`;
+      proSummary.textContent=`${totalPro} / ${gPro} g`;
+      carbSummary.textContent=`${totalCarb} / ${gCarb} g`;
+      fatSummary.textContent=`${totalFat} / ${gFat} g`;
+    }
+
+    addMeal.addEventListener('click',()=>{
+      const name=mealName.value.trim();
+      const cal=parseInt(mealCalories.value)||0;
+      const pro=parseInt(mealProtein.value)||0;
+      const carb=parseInt(mealCarbs.value)||0;
+      const fat=parseInt(mealFat.value)||0;
+      if(!name||cal<=0) return;
+      weekMeals[currentDay].meals.push({name,calories:cal,protein:pro,carbs:carb,fat:fat});
+      mealName.value='';mealCalories.value='';mealProtein.value='';mealCarbs.value='';mealFat.value='';
+      render();
+    });
+
+    function removeMeal(i){
+      weekMeals[currentDay].meals.splice(i,1);
+      render();
+    }
+
+    [goalCalories,goalProtein,goalCarbs,goalFat].forEach(input=>{
+      input.addEventListener('input',()=>{
+        weekMeals[currentDay].goals={
+          cal:parseInt(goalCalories.value)||0,
+          pro:parseInt(goalProtein.value)||0,
+          carb:parseInt(goalCarbs.value)||0,
+          fat:parseInt(goalFat.value)||0
+        };
+        render();
+      });
+    });
+
+    document.getElementById('printBtn').addEventListener('click',()=>window.print());
+    document.getElementById('exportBtn').addEventListener('click',()=>{
+      const blob=new Blob([JSON.stringify(weekMeals,null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='weekly-tracker.json';a.click();URL.revokeObjectURL(url);
+    });
+
+    // Draw chart function
+    function drawChart(svgId, data, weekNames, color){
+      const svg=document.getElementById(svgId);
+      const width=360, height=140;
+      const barWidth=width/data.length-12;
+      const maxVal=Math.max(...data);
+
+      const barsGroup=document.createElementNS("http://www.w3.org/2000/svg","g");
+      svg.appendChild(barsGroup);
+
+      data.forEach((val,i)=>{
+        const barHeight=(val/maxVal)*(height-40);
+        const x=i*(width/data.length)+10;
+        const y=height-barHeight-25;
+
+        const rect=document.createElementNS("http://www.w3.org/2000/svg","rect");
+        rect.setAttribute("x",x);
+        rect.setAttribute("y",y);
+        rect.setAttribute("width",barWidth);
+        rect.setAttribute("height",barHeight);
+        rect.setAttribute("rx",6);
+        rect.setAttribute("fill",color);
+        barsGroup.appendChild(rect);
+
+        const text=document.createElementNS("http://www.w3.org/2000/svg","text");
+        text.setAttribute("x",x+barWidth/2);
+        text.setAttribute("y",height-8);
+        text.setAttribute("fill","#fff");
+        text.setAttribute("font-size","12");
+        text.setAttribute("text-anchor","middle");
+        text.textContent=weekNames[i];
+        svg.appendChild(text);
+      });
+    }
+
+    const weekNames=["M","T","W","T","F","S","S"];
+    drawChart("proteinChart1",[35,48,56,52,56,64,60],weekNames,"#f4a519");
+    drawChart("proteinChart2",[25,40,30,60,50,70,55],weekNames,"#3b82f6");
+    drawChart("carbChart",[120,100,140,90,130,150,110],weekNames,"#22c55e");
+    drawChart("fatChart",[40,50,45,60,55,50,65],weekNames,"#ef4444");
+
+    render();
+  </script>
+</body>
+</html>

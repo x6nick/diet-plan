@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smart Recipe Suggestions</title>
+  <meta name="description" content="Responsive recipe suggestions with filters, favorites, and grocery list generator." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#121826;
+      --card:#1e293b;
+      --muted:#94a3b8;
+      --accent:#f97316;
+      --glass: rgba(255,255,255,0.05);
+      --radius:14px;
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background: linear-gradient(180deg,var(--bg),#0a0f1a 120%);
+      color:#e6eef6;
+      line-height:1.5;
+      padding:28px;
+    }
+    .container{max-width:1100px;margin:0 auto}
+
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#ef4444);display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{display:grid;grid-template-columns:1fr 340px;gap:20px}
+
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+    .card h2{margin:0 0 8px 0}
+    .small{font-size:13px;color:var(--muted)}
+
+    .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    select,input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:inherit}
+    button.btn{background:linear-gradient(90deg,var(--accent),#ef4444);border:none;padding:10px 14px;border-radius:10px;color:#fff;cursor:pointer;font-weight:600}
+
+    .recipes{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+    .recipe{background:rgba(255,255,255,0.03);padding:12px;border-radius:12px;cursor:pointer;transition:transform .2s}
+    .recipe:hover{transform:translateY(-3px)}
+    .recipe h3{margin:0;font-size:16px}
+    .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+    .tag{padding:4px 8px;border-radius:999px;font-size:12px;background:rgba(255,255,255,0.08)}
+
+    ul.grocery{margin:0;padding-left:18px}
+
+    footer{margin-top:20px;text-align:center;color:var(--muted);font-size:13px}
+
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">Food</div>
+        <div>
+          <h1>Smart Recipe Suggestions</h1>
+          <p class="lead">Find recipes, filter by type, add to favorites and grocery list.</p>
+        </div>
+      </div>
+      <button class="btn" id="printBtn">Print</button>
+    </header>
+
+    <div class="grid">
+      <main>
+        <div class="card">
+          <h2>Find Recipes</h2>
+          <div class="filters">
+            <input type="text" id="search" placeholder="Search recipe..." />
+            <select id="filterType">
+              <option value="all">All</option>
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
+          </div>
+          <div class="recipes" id="recipes"></div>
+        </div>
+      </main>
+
+      <aside>
+        <div class="card">
+          <h2>Favorites</h2>
+          <ul id="favorites" class="grocery small"></ul>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2>Grocery List</h2>
+          <ul id="grocery" class="grocery" aria-live="polite"></ul>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn" id="clearList">Clear</button>
+            <button class="btn" id="downloadList">Download</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>Made with flavor • Explore and enjoy healthy recipes</footer>
+  </div>
+
+  <script>
+    const recipes = [
+      {id:1,title:"Oatmeal Bowl",type:"breakfast",tags:["oats","banana","milk"],items:["Oats","Banana","Milk"]},
+      {id:2,title:"Grilled Chicken Salad",type:"lunch",tags:["chicken","lettuce","tomato"],items:["Chicken","Lettuce","Tomato","Olive oil"]},
+      {id:3,title:"Veggie Stir Fry",type:"dinner",tags:["broccoli","carrot","soy sauce"],items:["Broccoli","Carrot","Soy sauce","Rice"]},
+      {id:4,title:"Protein Smoothie",type:"snack",tags:["milk","protein powder","berries"],items:["Milk","Protein powder","Berries"]},
+      {id:5,title:"Avocado Toast",type:"breakfast",tags:["bread","avocado","egg"],items:["Bread","Avocado","Egg"]},
+      {id:6,title:"Quinoa Bowl",type:"lunch",tags:["quinoa","beans","corn"],items:["Quinoa","Beans","Corn","Lime"]},
+      {id:7,title:"Salmon with Veggies",type:"dinner",tags:["salmon","asparagus","lemon"],items:["Salmon","Asparagus","Lemon"]},
+      {id:8,title:"Chickpea Curry",type:"dinner",tags:["chickpeas","onion","tomato"],items:["Chickpeas","Onion","Tomato","Spices"]},
+      {id:9,title:"Fruit Salad",type:"snack",tags:["apple","orange","grapes"],items:["Apple","Orange","Grapes"]},
+      {id:10,title:"Egg Wrap",type:"breakfast",tags:["egg","tortilla","spinach"],items:["Egg","Tortilla","Spinach"]},
+      {id:11,title:"Pasta Primavera",type:"lunch",tags:["pasta","zucchini","tomato"],items:["Pasta","Zucchini","Tomato","Parmesan"]},
+      {id:12,title:"Stuffed Peppers",type:"dinner",tags:["bell pepper","rice","beans"],items:["Bell pepper","Rice","Beans","Cheese"]}
+    ];
+
+    const recipesEl = document.getElementById('recipes');
+    const favoritesEl = document.getElementById('favorites');
+    const groceryEl = document.getElementById('grocery');
+
+    let favorites = new Set();
+    let grocerySet = new Set();
+
+    function renderRecipes(){
+      const query = document.getElementById('search').value.toLowerCase();
+      const type = document.getElementById('filterType').value;
+      recipesEl.innerHTML = '';
+      recipes.filter(r=>(type==='all'||r.type===type) && r.title.toLowerCase().includes(query))
+        .forEach(r=>{
+          const div = document.createElement('div'); div.className='recipe';
+          div.innerHTML = `<h3>${r.title}</h3><div class="tags">${r.tags.map(t=>`<span class='tag'>${t}</span>`).join('')}</div>`;
+          div.addEventListener('click',()=>{ addFavorite(r); addItems(r.items); });
+          recipesEl.appendChild(div);
+        });
+    }
+
+    function addFavorite(r){ favorites.add(r.title); renderFavorites(); }
+    function renderFavorites(){
+      favoritesEl.innerHTML='';
+      if(favorites.size===0){favoritesEl.innerHTML='<li class="small">(No favorites yet)</li>';return;}
+      [...favorites].forEach(f=>{
+        const li=document.createElement('li');
+        li.textContent=f; li.style.cursor='pointer';
+        li.addEventListener('click',()=>{favorites.delete(f);renderFavorites();});
+        favoritesEl.appendChild(li);
+      });
+    }
+
+    function addItems(items){ items.forEach(i=>grocerySet.add(i)); renderGrocery(); }
+    function renderGrocery(){
+      groceryEl.innerHTML='';
+      if(grocerySet.size===0){groceryEl.innerHTML='<li class="small">(No items yet)</li>';return;}
+      [...grocerySet].sort().forEach(it=>{
+        const li=document.createElement('li'); li.textContent=it; li.style.cursor='pointer';
+        li.addEventListener('click',()=>{grocerySet.delete(it);renderGrocery();});
+        groceryEl.appendChild(li);
+      });
+    }
+
+    document.getElementById('search').addEventListener('input',renderRecipes);
+    document.getElementById('filterType').addEventListener('change',renderRecipes);
+    document.getElementById('clearList').addEventListener('click',()=>{grocerySet.clear();renderGrocery();});
+    document.getElementById('downloadList').addEventListener('click',()=>{
+      if(grocerySet.size===0) return alert('No items to download');
+      const blob = new Blob([[...grocerySet].sort().join('\n')],{type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download='recipe-grocery-list.txt'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('printBtn').addEventListener('click',()=>window.print());
+
+    renderRecipes();
+    renderFavorites();
+    renderGrocery();
+  </script>
+</body>
+</html>
